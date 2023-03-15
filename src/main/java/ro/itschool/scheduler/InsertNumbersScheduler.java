@@ -60,10 +60,10 @@ public class InsertNumbersScheduler {
 
         log.info("All tickets: " + tickets.getBody());
 
-        //Verify if any of those is a winning combination
+        //TODO Verify if any of those is a winning combination
 
 
-        //Save the winner in database
+        //TODO Save the winner in database
 
 
         //Mark all combinations as obsolete
