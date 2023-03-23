@@ -9,11 +9,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import ro.itschool.controller.model.Ticket;
+import ro.itschool.entity.Winner;
 import ro.itschool.entity.WinningCombination;
+import ro.itschool.repository.WinnerRepo;
 import ro.itschool.repository.WinningCombinationRepo;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Log
@@ -21,6 +24,11 @@ public class InsertNumbersScheduler {
 
     @Autowired
     WinningCombinationRepo repo;
+
+    @Autowired
+    WinnerRepo winnerRepo;
+
+    int counter = 0;
 
     //<second> <minute> <hour> <day-of-month> <month> <day-of-week>
     //0/x = every x seconds
@@ -64,6 +72,31 @@ public class InsertNumbersScheduler {
 
 
         //TODO Save the winner in database
+
+
+        Set<Integer> parseWinningNumbers = Arrays.stream(winningCombination.getWinningNumbers().split(","))
+          .map(Integer::parseInt)
+          .collect(Collectors.toSet());
+
+        for (Ticket ticket : Objects.requireNonNull(tickets.getBody())) {
+            Set<Integer> parseEachTicketNumbers = Arrays.stream(ticket.getWinningNumbers().split(","))
+              .map(Integer::parseInt)
+              .collect(Collectors.toSet());
+            for (Integer wn : parseWinningNumbers) {
+                for (Integer number : parseEachTicketNumbers) {
+                    if (Objects.equals(wn, number)) {
+                        counter++;
+                    }
+                    if (counter == parseWinningNumbers.size()) {
+                        Winner winner = new Winner();
+                        winner.setWinnerName(ticket.getBuyer());
+                        winner.setWinningTime(winningCombination.getInsertTime());
+                        winnerRepo.save(winner);
+                        log.info("New winner: " + winner);
+                    }
+                }
+            }
+        }
 
 
         //Mark all combinations as obsolete
